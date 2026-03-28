@@ -1,0 +1,23 @@
+name: VPS_FREE_RIMURU
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Download Ngrok & Setup
+      run: |
+        Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip
+    - name: Connect Ngrok
+      run: .\ngrok\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+    - name: Aktifkan RDP
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - name: Generate Tunnel
+      run: Start-Process .\ngrok\ngrok.exe -ArgumentList "tcp 3389"
+    - name: Jaga Server Tetap Hidup
+      run: |
+        $id = Get-Process ngrok
+        Wait-Process -Id $id.Id
+        
